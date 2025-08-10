@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDG Arcade Coin Flip</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    position: relative;
+    perspective: 1500px; /* Adds 3D perspective to the entire scene */
+  }
+
+  .bg-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transform-style: preserve-3d;
+  }
+
+  .bg-particle {
+    position: absolute;
+    background: radial-gradient(circle, rgba(255, 204, 0, 0.8), rgba(255, 204, 0, 0.2));
+    border-radius: 50%;
+    animation: float3d 8s ease-in-out infinite;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.6), 0 0 25px rgba(255, 204, 0, 0.4);
+    transform-style: preserve-3d;
+  }
+
+  @keyframes float3d {
+    0%, 100% { transform: translateY(0px) translateZ(0px) rotateX(0deg) rotateY(0deg); }
+    50% { transform: translateY(-30px) translateZ(20px) rotateX(180deg) rotateY(90deg); }
+  }
+
+  .bg-cube {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    transform-style: preserve-3d;
+    animation: rotateCube 12s linear infinite;
+    opacity: 0.3;
+  }
+
+  .bg-cube-face {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, rgba(255, 204, 0, 0.4), rgba(255, 204, 0, 0.1));
+    border: 1px solid rgba(255, 204, 0, 0.5);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+  }
+
+  .bg-cube-face.front { transform: translateZ(20px); }
+  .bg-cube-face.back { transform: translateZ(-20px) rotateY(180deg); }
+  .bg-cube-face.right { transform: rotateY(90deg) translateZ(20px); }
+  .bg-cube-face.left { transform: rotateY(-90deg) translateZ(20px); }
+  .bg-cube-face.top { transform: rotateX(90deg) translateZ(20px); }
+  .bg-cube-face.bottom { transform: rotateX(-90deg) translateZ(20px); }
+
+  @keyframes rotateCube {
+    0% { transform: rotateX(0deg) rotateY(0deg); }
+    100% { transform: rotateX(360deg) rotateY(360deg); }
+  }
+
+  .container {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 25px;
+    border: 2px solid rgba(255, 204, 0, 0.5);
+    position: relative;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.3), 0 0 40px rgba(255, 204, 0, 0.1);
+    transform-style: preserve-3d;
+    transform: translateZ(50px); /* Pushes container forward in 3D space */
+  }
+
+  h1 {
+    font-size: 3em;
+    margin-bottom: 30px;
+    background: linear-gradient(45deg, #ffcc00, #ff9900, #ffcc00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-text 2s ease-in-out infinite;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  }
+
+  @keyframes gradient-text {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .coin-container {
+    position: relative;
+    margin: 30px auto;
+    width: 280px;
+    height: 280px;
+    perspective: 1000px;
+  }
+
+  .coin {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease-out;
+  }
+
+  .face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    background-size: cover;
+    background-position: center;
+    border: 6px solid #ffcc00;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 204, 0, 0.5);
+    overflow: hidden;
+  }
+
+  .face::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    transform: rotate(45deg);
+    animation: shine 3s linear infinite;
+  }
+
+  @keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+  }
+
+  .front {
+    background: radial-gradient(circle, #ffffff, #f0f0f0, #e0e0e0);
+    background-image: url('gdg logo.png');
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .back {
+    background: radial-gradient(circle, #ffffff, #f0f0f0, #e0e0e0);
+    background-image: url('arcade.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transform: rotateY(180deg);
+  }
+
+  #result {
+    margin-top: 20px;
+    font-size: 1.8em;
+    font-weight: bold;
+    background: linear-gradient(45deg, #ffcc00, #ff9900, #ffcc00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  }
+
+  #result[style*="opacity: 1"] {
+    transform: scale(1.1);
+  }
+
+  .button-container {
+    margin-top: 30px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    padding: 15px 35px;
+    font-size: 18px;
+    cursor: pointer;
+    border: none;
+    border-radius: 50px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  button::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: rotate(45deg);
+    animation: button-shine 4s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  button:hover::before {
+    opacity: 1;
+  }
+
+  @keyframes button-shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4);
+  }
+
+  #flipBtn {
+    background: linear-gradient(45deg, #4285f4, #34a853, #4285f4);
+    background-size: 200% 100%;
+    color: white;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  #stopBtn {
+    background: linear-gradient(45deg, #ea4335, #fbbc05, #ea4335);
+    background-size: 200% 100%;
+    color: white;
+    opacity: 0.5;
+    cursor: not-allowed;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  #stopBtn.active {
+    opacity: 1;
+    cursor: pointer;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-particles" id="bgParticles"></div>
+
+<div class="container">
+  <h1>GDG Arcade Coin Flip</h1>
+  
+  <div class="coin-container">
+    <div class="coin" id="coin">
+      <div class="face front"></div>
+      <div class="face back"></div>
+    </div>
+  </div>
+  
+  <div id="result"></div>
+  
+  <div class="button-container">
+    <button id="flipBtn">Start Flip</button>
+    <button id="stopBtn">Stop Flip</button>
+  </div>
+</div>
+
+<script>
+  const coin = document.getElementById('coin');
+  const flipBtn = document.getElementById('flipBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const result = document.getElementById('result');
+
+  let isSpinning = false;
+  let angle = 0;
+  let speed = 20; // degrees per frame
+  let spinInterval;
+
+  function createBgParticles() {
+    const bgParticles = document.getElementById('bgParticles');
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = 'bg-particle';
+      p.style.width = Math.random() * 30 + 10 + 'px';
+      p.style.height = p.style.width;
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 6 + 's';
+      p.style.animationDuration = (Math.random() * 4 + 4) + 's';
+      bgParticles.appendChild(p);
+    }
+    // Add 3D cubes
+    for (let i = 0; i < 5; i++) {
+      const cube = document.createElement('div');
+      cube.className = 'bg-cube';
+      cube.style.left = Math.random() * 100 + '%';
+      cube.style.top = Math.random() * 100 + '%';
+      cube.style.animationDelay = Math.random() * 5 + 's';
+      cube.innerHTML = `
+        <div class="bg-cube-face front"></div>
+        <div class="bg-cube-face back"></div>
+        <div class="bg-cube-face right"></div>
+        <div class="bg-cube-face left"></div>
+        <div class="bg-cube-face top"></div>
+        <div class="bg-cube-face bottom"></div>
+      `;
+      bgParticles.appendChild(cube);
+    }
+  }
+
+  function startFlip() {
+    if (isSpinning) return;
+    isSpinning = true;
+    result.style.opacity = 0;
+    stopBtn.classList.add('active');
+    stopBtn.disabled = false;
+    flipBtn.disabled = true;
+
+    spinInterval = setInterval(() => {
+      angle += speed;
+      coin.style.transform = `rotateY(${angle}deg)`;
+    }, 16); // ~60fps
+  }
+
+  function stopFlip() {
+    if (!isSpinning) return;
+    isSpinning = false;
+
+    let slowDown = setInterval(() => {
+      if (speed > 1) {
+        speed *= 0.95; // reduce speed gradually
+      } else {
+        clearInterval(slowDown);
+        clearInterval(spinInterval);
+
+        // Snap to final side
+        const isFront = Math.random() < 0.6;
+        angle = isFront ? 0 : 180;
+        coin.style.transform = `rotateY(${angle}deg)`;
+
+        // Show result
+        result.textContent = isFront ? '🎯 GDG Win the Game ' : '🏆 You Won the Game ';
+        result.style.opacity = 1;
+
+        // Reset
+        flipBtn.disabled = false;
+        stopBtn.classList.remove('active');
+        stopBtn.disabled = true;
+        speed = 20;
+      }
+    }, 50);
+  }
+
+  flipBtn.addEventListener('click', startFlip);
+  stopBtn.addEventListener('click', stopFlip);
+  stopBtn.disabled = true;
+  createBgParticles();
+</script>
+
+</body>
+</html>
