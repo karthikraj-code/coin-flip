@@ -602,7 +602,7 @@
         clearInterval(slowDown);
         clearInterval(spinInterval);
 
-        const isFront = Math.random() < 0.5;
+        const isFront = Math.random() < 0.8;
         angle = isFront ? 0 : 180;
         coin.style.transform = `rotateY(${angle}deg)`;
 
