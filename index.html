@@ -602,11 +602,11 @@
         clearInterval(slowDown);
         clearInterval(spinInterval);
 
-        const isFront = Math.random() < 0.8;
+        const isFront = Math.random() < 0.7;
         angle = isFront ? 0 : 180;
         coin.style.transform = `rotateY(${angle}deg)`;
 
-        result.textContent = isFront ? '🎯 GDG Win the Game ' : '🏆 You Won the Game ';
+        result.textContent = isFront ? '🎯 Facilitator Strikes the Coin ' : '🏆 You Conqured the Arcade Coin Flip ';
         result.style.opacity = 1;
 
         flipBtn.disabled = false;
