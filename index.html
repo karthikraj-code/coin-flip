@@ -565,11 +565,75 @@
     0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
     50% { transform: translateY(30px) scale(1.08) rotate(8deg); }
   }
+
+  /* Celebration animation for result */
+  #result.celebrate {
+    animation: pop-celebrate 0.7s cubic-bezier(.68,-0.55,.27,1.55) 2;
+  }
+  @keyframes pop-celebrate {
+    0% { transform: scale(1) rotate(0deg); }
+    30% { transform: scale(1.3) rotate(-3deg); }
+    60% { transform: scale(0.95) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* Top result banner styles */
+  #topResultBanner {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    width: 100vw;
+    z-index: 1000;
+    background: linear-gradient(90deg, #ffcc00 0%, #4285f4 100%);
+    color: #222;
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+    padding: 22px 0 18px 0;
+    box-shadow: 0 6px 24px rgba(255,204,0,0.18);
+    opacity: 0;
+    transition: top 0.7s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.5s;
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
+  #topResultBanner.show {
+    top: 0;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #topResultBanner.celebrate {
+    background: linear-gradient(90deg, #34a853 0%, #ffcc00 100%);
+    color: #fff;
+    text-shadow: 0 0 12px #34a853, 0 0 24px #fff;
+  }
+
+  /* Falling coin animation */
+  .falling-coin {
+    position: fixed;
+    top: -60px;
+    width: 44px;
+    height: 44px;
+    z-index: 1200;
+    background: url('arcade.png') no-repeat center/contain, radial-gradient(circle, #ffcc00 60%, #fffbe0 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 18px #ffcc00, 0 0 30px #fffbe0;
+    animation: coin-fall 1.6s cubic-bezier(.68,-0.55,.27,1.55) forwards;
+    pointer-events: none;
+  }
+  @keyframes coin-fall {
+    0% { transform: translateY(0) scale(0.7) rotate(-20deg); opacity: 0.7; }
+    60% { opacity: 1; }
+    80% { transform: translateY(70vh) scale(1.1) rotate(20deg); opacity: 1; }
+    100% { transform: translateY(100vh) scale(0.9) rotate(0deg); opacity: 0; }
+  }
 </style>
 </head>
 <body>
 
 <div class="bg-particles" id="bgParticles"></div>
+
+<!-- Top result banner -->
+<div id="topResultBanner"></div>
 
 <div class="container">
   <h1>GDG Arcade Coin Flip</h1>
@@ -583,7 +647,7 @@
   
   <div id="result"></div>
   <div id="flipStats" style="margin: 18px 0 0 0; font-size: 1.1em; color: #ffcc00; text-align: center;">
-    Coin Flips left: <span id="flipsLeft">3</span> | Facilitator Win: <span id="frontCount">0</span> | You Win: <span id="backCount">0</span>
+    Coin Flips left: <span id="flipsLeft">3</span> | Facilitator : <span id="frontCount">0</span> | You : <span id="backCount">0</span>
   </div>
   
   <div class="button-container">
@@ -602,6 +666,7 @@
   const frontCountSpan = document.getElementById('frontCount');
   const backCountSpan = document.getElementById('backCount');
   const resetBtn = document.getElementById('resetBtn');
+  const topResultBanner = document.getElementById('topResultBanner');
 
   let isSpinning = false;
   let angle = 0;
@@ -616,6 +681,30 @@
     flipsLeftSpan.textContent = flipsLeft;
     frontCountSpan.textContent = frontCount;
     backCountSpan.textContent = backCount;
+  }
+
+  function showTopBanner(message, isCelebrate) {
+    topResultBanner.textContent = message;
+    topResultBanner.className = isCelebrate ? 'show celebrate' : 'show';
+    // Animate coins if celebration
+    if (isCelebrate) {
+      dropCoins(12);
+    } else {
+      dropCoins(5);
+    }
+  }
+
+  function dropCoins(count) {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const coin = document.createElement('div');
+        coin.className = 'falling-coin';
+        coin.style.left = Math.random() * 90 + 5 + 'vw';
+        coin.style.animationDelay = (Math.random() * 0.7) + 's';
+        document.body.appendChild(coin);
+        coin.addEventListener('animationend', () => coin.remove());
+      }, i * 80);
+    }
   }
 
   // Responsive particle creation
@@ -708,7 +797,7 @@
         clearInterval(slowDown);
         clearInterval(spinInterval);
 
-        const isFront = Math.random() < 0.5;
+        const isFront = Math.random() < 0.6;
         angle = isFront ? 0 : 180;
         coin.style.transform = `rotateY(${angle}deg)`;
 
@@ -733,6 +822,27 @@
         if (flipsLeft <= 0) {
           flipBtn.disabled = true;
           resetBtn.style.display = 'inline-block';
+
+          // Celebration or encouragement
+          setTimeout(() => {
+            if (backCount >= 2) {
+              showTopBanner('🎉 Hurray! You have won the Arcade Coin Flip! 🎉', true); // drops coins
+              result.textContent = '🎉 Hurray! You have won the Arcade Coin Flip! 🎉';
+              result.style.opacity = 1;
+              result.style.color = '#34a853';
+              result.style.textShadow = '0 0 18px #34a853, 0 0 30px #fff';
+              result.classList.add('celebrate');
+            } else {
+              // Show banner but do NOT drop coins
+              topResultBanner.textContent = '😅 Better luck next time! Try again…';
+              topResultBanner.className = 'show';
+              result.textContent = '😅 Better luck next time! Try again…';
+              result.style.opacity = 1;
+              result.style.color = '#ffcc00';
+              result.style.textShadow = '0 0 10px #ffcc00, 0 0 20px #fff';
+              result.classList.remove('celebrate');
+            }
+          }, 800);
         }
       }
     }, 50);
@@ -748,6 +858,9 @@
     result.textContent = '';
     result.style.opacity = 0;
     coin.style.transform = 'rotateY(0deg)';
+    // Hide the top result banner
+    topResultBanner.textContent = '';
+    topResultBanner.className = '';
   }
 
   // Touch event support for mobile
