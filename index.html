@@ -582,10 +582,14 @@
   </div>
   
   <div id="result"></div>
+  <div id="flipStats" style="margin: 18px 0 0 0; font-size: 1.1em; color: #ffcc00; text-align: center;">
+    Coin Flips left: <span id="flipsLeft">3</span> | Facilitator Win: <span id="frontCount">0</span> | You Win: <span id="backCount">0</span>
+  </div>
   
   <div class="button-container">
     <button id="flipBtn">Start Flip</button>
     <button id="stopBtn">Stop Flip</button>
+    <button id="resetBtn" style="display:none; background:linear-gradient(45deg,#333,#ffcc00,#333);color:#fff;">Reset</button>
   </div>
 </div>
 
@@ -594,11 +598,25 @@
   const flipBtn = document.getElementById('flipBtn');
   const stopBtn = document.getElementById('stopBtn');
   const result = document.getElementById('result');
+  const flipsLeftSpan = document.getElementById('flipsLeft');
+  const frontCountSpan = document.getElementById('frontCount');
+  const backCountSpan = document.getElementById('backCount');
+  const resetBtn = document.getElementById('resetBtn');
 
   let isSpinning = false;
   let angle = 0;
   let speed = 20;
   let spinInterval;
+
+  let flipsLeft = 3;
+  let frontCount = 0;
+  let backCount = 0;
+
+  function updateStats() {
+    flipsLeftSpan.textContent = flipsLeft;
+    frontCountSpan.textContent = frontCount;
+    backCountSpan.textContent = backCount;
+  }
 
   // Responsive particle creation
   function createBgParticles() {
@@ -665,12 +683,13 @@
   }
 
   function startFlip() {
-    if (isSpinning) return;
+    if (isSpinning || flipsLeft <= 0) return;
     isSpinning = true;
     result.style.opacity = 0;
     stopBtn.classList.add('active');
     stopBtn.disabled = false;
     flipBtn.disabled = true;
+    resetBtn.style.display = 'none';
 
     spinInterval = setInterval(() => {
       angle += speed;
@@ -689,19 +708,46 @@
         clearInterval(slowDown);
         clearInterval(spinInterval);
 
-        const isFront = Math.random() < 0.7;
+        const isFront = Math.random() < 0.5;
         angle = isFront ? 0 : 180;
         coin.style.transform = `rotateY(${angle}deg)`;
 
         result.textContent = isFront ? '🎯 Facilitator Strikes the Coin ' : '🏆 You Conqured the Arcade Coin Flip ';
         result.style.opacity = 1;
 
+        // Update counts
+        if (isFront) {
+          frontCount++;
+        } else {
+          backCount++;
+        }
+        flipsLeft--;
+        updateStats();
+
         flipBtn.disabled = false;
         stopBtn.classList.remove('active');
         stopBtn.disabled = true;
         speed = 20;
+
+        // If no flips left, disable flip and show reset
+        if (flipsLeft <= 0) {
+          flipBtn.disabled = true;
+          resetBtn.style.display = 'inline-block';
+        }
       }
     }, 50);
+  }
+
+  function resetGame() {
+    flipsLeft = 3;
+    frontCount = 0;
+    backCount = 0;
+    updateStats();
+    flipBtn.disabled = false;
+    resetBtn.style.display = 'none';
+    result.textContent = '';
+    result.style.opacity = 0;
+    coin.style.transform = 'rotateY(0deg)';
   }
 
   // Touch event support for mobile
@@ -735,6 +781,7 @@
   // Initialize
   flipBtn.addEventListener('click', startFlip);
   stopBtn.addEventListener('click', stopFlip);
+  resetBtn.addEventListener('click', resetGame);
   stopBtn.disabled = true;
   
   // Add touch support for mobile devices
@@ -747,6 +794,7 @@
   
   // Initial setup
   createBgParticles();
+  updateStats();
 </script>
 
 </body>
